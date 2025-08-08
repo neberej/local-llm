@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI search</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #f7f7f8;
+      min-height: 100vh;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .page-wrapper.has-response {
+      align-items: flex-start;
+      padding-top: 40px;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    .title {
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      color: #333;
+    }
+
+    .input-box {
+      width: 100%;
+      padding: 20px;
+      font-size: 1.2rem;
+      border: 1px solid rgb(155, 155, 155);
+      border-radius: 12px;
+      box-sizing: border-box;
+      margin-bottom: 1rem;
+      
+    }
+
+    .go-button {
+      padding: 12px 24px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: teal;
+      color: white;
+      cursor: pointer;
+    }
+    .go-button:hover {
+      background-color: #00AEAE;
+    }
+    .go-button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+
+    .spinner {
+      margin-top: 1rem;
+      width: 24px;
+      height: 24px;
+      border: 4px solid #ccc;
+      border-top: 4px solid #10a37f;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      visibility: hidden;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .spinner.visible {
+      visibility: visible;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .response-box {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      text-align: left;
+      white-space: pre-wrap;
+      overflow-y: scroll;
+      width: 100%;
+      display: none;
+    }
+
+    .response-box.visible {
+      display: block;
+    }
+
+    .accordion {
+      margin: 1rem 0;
+    }
+
+    .accordion-header {
+      padding: 10px;
+      background: #f0f0f0;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+
+    .accordion-content {
+      display: none;
+      padding: 10px;
+      border: 1px solid #f0f0f0;
+      border-radius: 4px;
+    }
+
+    .accordion-content.expanded {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper" id="pageWrapper">
+    <div class="container">
+      <textarea id="inputText" class="input-box" rows="4" placeholder="Search for something..."></textarea>
+      <br>
+      <button class="go-button" id="goButton">Go</button>
+      <div class="spinner" id="spinner"></div>
+      <div class="response-box" id="responseBox"></div>
+    </div>
+  </div>
+
+  <script>
+  const goButton = document.getElementById("goButton");
+  const spinner = document.getElementById("spinner");
+  const inputText = document.getElementById("inputText");
+  const responseBox = document.getElementById("responseBox");
+  const pageWrapper = document.getElementById("pageWrapper");
+
+  function resetSearch() {
+    inputText.value = "";
+    responseBox.classList.remove("visible");
+    responseBox.innerHTML = "";
+    pageWrapper.classList.remove("has-response");
+    goButton.textContent = "Go";
+  }
+
+  goButton.addEventListener("click", async () => {
+    if (goButton.textContent === "New Search") {
+      resetSearch();
+      return;
+    }
+
+    const text = inputText.value.trim();
+    if (!text) return;
+
+    spinner.classList.add("visible");
+    goButton.disabled = true;
+    responseBox.classList.remove("visible");
+    responseBox.innerHTML = "";
+    pageWrapper.classList.remove("has-response");
+
+    try {
+      const res = await fetch("/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+
+      const data = await res.json();
+
+      let html = "";
+      if (data.answer) {
+        html += `<h3>Answer</h3><div>${data.answer.replace(/\n/g, "<br>")}</div>`;
+      }
+      if (data.plan || data.results) {
+        html += `
+          <div class="accordion">
+            <div class="accordion-header">Show Details</div>
+            <div class="accordion-content">`;
+        if (data.plan) {
+          html += `<h4>Plan</h4><pre>${JSON.stringify(data.plan, null, 2)}</pre>`;
+        }
+        if (data.results) {
+          html += `<h4>Results</h4><pre>${JSON.stringify(data.results, null, 2)}</pre>`;
+        }
+        html += `</div></div>`;
+      }
+
+      if (!data.plan && !data.results && !data.answer) {
+        html += `<h3>Something went wrong. Try again!</h3>`;
+      }
+
+      responseBox.innerHTML = html;
+      responseBox.classList.add("visible");
+      pageWrapper.classList.add("has-response");
+      goButton.textContent = "New Search";
+
+      // Add accordion toggle functionality
+      const headers = document.querySelectorAll('.accordion-header');
+      headers.forEach(header => {
+        header.addEventListener('click', () => {
+          const content = header.nextElementSibling;
+          content.classList.toggle('expanded');
+        });
+      });
+
+    } catch (err) {
+      responseBox.innerHTML = `<div style="color:red;">Error: ${err.message}</div>`;
+      responseBox.classList.add("visible");
+      pageWrapper.classList.add("has-response");
+      goButton.textContent = "New Search";
+    } finally {
+      spinner.classList.remove("visible");
+      goButton.disabled = false;
+    }
+  });
+  </script>
+</body>
+</html>
