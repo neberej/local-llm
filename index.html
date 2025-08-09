@@ -184,10 +184,10 @@
       });
 
       const data = await res.json();
-
       let html = "";
-      if (data.answer) {
-        html += `<h3>Answer</h3><div>${data.answer.replace(/\n/g, "<br>")}</div>`;
+      const results = JSON.parse(data.answer);
+      if (results && results.message) {
+        html += `<h3>Answer</h3><div>${results.message.replace(/\n/g, "<br>")}</div>`;
       }
       if (data.plan || data.results) {
         html += `

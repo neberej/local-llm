@@ -62,8 +62,8 @@ No text or explanation outside the JSON.
             plan = json.loads(plan_raw)
             if not isinstance(plan, list):
                 plan = [plan]
-        except json.JSONDecodeError:
-            logging.error("Could not parse LLM plan")
+        except json.JSONDecodeError as e:
+            logging.error(f"Could not parse LLM plan: {str(e)}")
             return {"error": "Could not parse LLM plan", "raw": plan_raw}
 
         results = []

@@ -12,8 +12,6 @@ logging.basicConfig(
     format="[%(asctime)s] %(levelname)s - %(message)s"
 )
 
-
-
 class Actions:
 
     @staticmethod
@@ -71,3 +69,10 @@ class Actions:
         except requests.exceptions.RequestException as e:
             logging.error(f"Request failed: {e}")
             return {"error": f"Could not get data from {url}: {e}"}
+
+
+    @staticmethod
+    def echo(params):
+        logging.info(f"Echo action called with params: {params}")
+        # return {"echo": params}
+        return params
