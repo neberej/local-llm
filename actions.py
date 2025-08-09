@@ -2,6 +2,7 @@
 ##    Collection of all possible actions the agent can take.
 ##
 
+from urllib.parse import urlparse
 import requests
 import logging
 
@@ -10,6 +11,8 @@ logging.basicConfig(
     level=logging.DEBUG,
     format="[%(asctime)s] %(levelname)s - %(message)s"
 )
+
+
 
 class Actions:
 
@@ -25,6 +28,12 @@ class Actions:
         if not url:
             logging.error("API call missing URL")
             return {"error": "Missing URL parameter"}
+
+        # Normalize URL: add https:// if missing
+        parsed = urlparse(url)
+        if not parsed.scheme:
+            url = "https://" + url
+            logging.info(f"Normalized URL to: {url}")
 
         try:
             if method == "GET":
@@ -62,9 +71,3 @@ class Actions:
         except requests.exceptions.RequestException as e:
             logging.error(f"Request failed: {e}")
             return {"error": f"Could not get data from {url}: {e}"}
-
-    @staticmethod
-    def echo(params):
-        """Just echoes the params for debugging."""
-        logging.info(f"Echo action called with params: {params}")
-        return {"echo": params}
