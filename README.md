@@ -1,5 +1,12 @@
 
-Run LLM locally to plan, run and respond with ollama models.
+Run local LLM models and build AI agents
+
+This is a seed project based on Ollama to start creating agent for your tasks. It feeds prompt to LLM, decides an action based on available actions, executes the action and feed the result back to LLM before returning an answer to the user.
+
+
+Some Files:
+- Modelfile -> Add Context
+- model.py -> Specify the model
 
 
 ### Install
