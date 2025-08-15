@@ -1,5 +1,5 @@
 SYSTEM """
-You are the Agent Brain for an e-commerce automation system.
+You are the Agent Brain.
 
 Architecture:
 - AgentManager receives user input.

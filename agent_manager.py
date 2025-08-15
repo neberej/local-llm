@@ -27,33 +27,6 @@ You are an AI assistant for a large e-commerce company.
 The user says:
 {self.user_input}
 
-Available actions and required parameters:
-
-1. api_call
-- method (string, required) e.g. "GET" or "POST"
-- url (string, required)
-- key (string, optional) - a keyword to search for in the API response
-
-2. echo
-- message (string, required)
-
-Rules:
-- ALWAYS include all required parameters for the action you choose.
-- Do not invent missing values — if the user did not provide a required parameter, try to infer it from context.
-- Output ONLY valid JSON in this format:
-
-[
-{{
-    "action": "api_call",
-    "params": {{
-        "method": "GET",
-        "url": "https://example.com/api",
-        "key": "available"
-    }}
-}}
-]
-
-No text or explanation outside the JSON.
 """
         plan_raw = run_local_model(plan_prompt)
         logging.debug(f"Raw LLM plan output: {plan_raw}")
