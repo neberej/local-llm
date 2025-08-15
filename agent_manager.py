@@ -22,7 +22,7 @@ class AgentManager:
 
         # 1. Get a plan from the LLM
         plan_prompt = f"""
-You are an AI task planner.
+You are an AI assistant for a large e-commerce company.
 
 The user says:
 {self.user_input}
@@ -99,6 +99,10 @@ Today's date is {datetime.date.today().isoformat()}.
 If an action failed (error present), explain briefly why and suggest next steps if possible.
 If it succeeded, provide a concise, direct answer to the user.
 Do not include explanations or confirmations, only the essential answer the user expects based on the actions.
+Output ONLY valid JSON with this schema:
+{{
+  "message": "<short user-facing answer>"
+}}
 """
         final_answer = run_local_model(interpretation_prompt).strip()
         logging.info(f"Final interpreted answer: {final_answer}")

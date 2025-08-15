@@ -18,7 +18,7 @@ logging.basicConfig(
 with open(os.path.join(os.path.dirname(__file__), "Modelfile"), "r") as f:
     CONTEXT = f.read().strip()
 
-def run_local_model(prompt: str, model: str = "llama3:8b", max_retries: int = 3, temperature: float = 0.3) -> str:
+def run_local_model(prompt: str, model: str = "llama3:8b", max_retries: int = 1, temperature: float = 0.3) -> str:
     
     start = time.time()
     json_prompt = f"""

@@ -4,72 +4,79 @@
   <meta charset="UTF-8">
   <title>AI search</title>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: sans-serif;
-      background-color: #f7f7f8;
-      min-height: 100vh;
-    }
 
     body {
+      background: #fff;
       display: flex;
-      flex-direction: column;
-    }
-
-    .page-wrapper {
-      flex: 1;
-      display: flex;
-      align-items: center;
       justify-content: center;
-      padding: 0;
-    }
-
-    .page-wrapper.has-response {
-      align-items: flex-start;
-      padding-top: 40px;
+      margin: 0;
+      font-family: monospace;
     }
 
     .container {
-      max-width: 800px;
-      width: 100%;
-      padding: 20px;
-      box-sizing: border-box;
-      text-align: center;
-    }
-
-    .title {
-      font-size: 2rem;
-      margin-bottom: 2rem;
-      color: #333;
-    }
-
-    .input-box {
-      width: 100%;
-      padding: 20px;
-      font-size: 1.2rem;
-      border: 1px solid rgb(155, 155, 155);
+      background: #fff;
       border-radius: 12px;
-      box-sizing: border-box;
-      margin-bottom: 1rem;
-      
+      overflow: hidden;
+      width: 800px;
+      max-width: 95%;
+      margin: 2rem auto;
     }
 
-    .go-button {
-      padding: 12px 24px;
+    .content {
+      padding: 1.5rem;
       font-size: 1rem;
+      line-height: 1.5;
+      color: #222;
+    }
+
+    .keyword { color: #d73a49; }
+    .string { color: #22863a; }
+    .property { color: #6f42c1; }
+    .number { color: #005cc5; }
+
+    /* New: input + button inline */
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .search-button {
+      background: #007aff;
+      color: #fff;
       border: none;
-      border-radius: 8px;
-      background-color: teal;
-      color: white;
+      border-radius: 3px;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      font-family: 'JetBrains Mono', monospace;
       cursor: pointer;
+      transition: background 0.2s;
     }
-    .go-button:hover {
-      background-color: #00AEAE;
+    .search-button:hover {
+      background: #005bb5;
     }
-    .go-button:disabled {
-      background-color: #aaa;
-      cursor: not-allowed;
+
+    .query-input {
+      flex: 1;
+      background: #fff;
+      border-radius: 5px;
+      border: 1px solid #eee;
+      padding: 0.8rem;
+      font-size: 0.9rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: #222;
+      resize: none;
+    }
+    .query-input:focus {
+      outline: none;
+      border-color: #007aff;
+      box-shadow: 0 0 5px rgba(0, 122, 255, 0.3);
+    }
+
+    .divider {
+      border-top: 1px solid #ddd;
+      margin: 1rem 0;
     }
 
     .spinner {
@@ -95,20 +102,9 @@
     }
 
     .response-box {
-      margin-top: 1.5rem;
-      padding: 1rem;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      text-align: left;
-      white-space: pre-wrap;
-      overflow-y: scroll;
-      width: 100%;
-      display: none;
-    }
-
-    .response-box.visible {
-      display: block;
+      margin-top: 1rem;
+      max-height: 70vh;
+      overflow-y: auto;
     }
 
     .accordion {
@@ -133,14 +129,21 @@
     .accordion-content.expanded {
       display: block;
     }
+
+    .error-message {
+      color: #d73a49;
+      font-weight: 500;
+    }
+
   </style>
 </head>
 <body>
-  <div class="page-wrapper" id="pageWrapper">
-    <div class="container">
-      <textarea id="inputText" class="input-box" rows="4" placeholder="Search for something..."></textarea>
-      <br>
-      <button class="go-button" id="goButton">Go</button>
+  <div class="container" id="pageWrapper">
+    <div class="content">
+      <div class="search-row">
+        <textarea id="inputText" class="query-input" rows="1" placeholder="Search for something..."></textarea>
+        <button class="search-button" id="goButton">Go</button>
+      </div>
       <div class="spinner" id="spinner"></div>
       <div class="response-box" id="responseBox"></div>
     </div>
@@ -153,19 +156,7 @@
   const responseBox = document.getElementById("responseBox");
   const pageWrapper = document.getElementById("pageWrapper");
 
-  function resetSearch() {
-    //inputText.value = "";
-    responseBox.classList.remove("visible");
-    responseBox.innerHTML = "";
-    pageWrapper.classList.remove("has-response");
-    goButton.textContent = "Go";
-  }
-
   goButton.addEventListener("click", async () => {
-    if (goButton.textContent === "New Search") {
-      resetSearch();
-      return;
-    }
 
     const text = inputText.value.trim();
     if (!text) return;
@@ -184,15 +175,24 @@
       });
 
       const data = await res.json();
+
+      if (data.error) {
+        responseBox.innerHTML = '<div class="error-message">Error: ' + data.error + '</div>';
+        responseBox.classList.add("visible");
+        pageWrapper.classList.add("has-response");
+        return;
+      }
+
       let html = "";
       const results = JSON.parse(data.answer);
+
       if (results && results.message) {
         html += `<h3>Answer</h3><div>${results.message.replace(/\n/g, "<br>")}</div>`;
       }
       if (data.plan || data.results) {
         html += `
           <div class="accordion">
-            <div class="accordion-header">Show Details</div>
+            <div class="accordion-header">&#9654; Show Details</div>
             <div class="accordion-content">`;
         if (data.plan) {
           html += `<h4>Plan</h4><pre>${JSON.stringify(data.plan, null, 2)}</pre>`;
@@ -210,7 +210,6 @@
       responseBox.innerHTML = html;
       responseBox.classList.add("visible");
       pageWrapper.classList.add("has-response");
-      goButton.textContent = "New Search";
 
       // Add accordion toggle functionality
       const headers = document.querySelectorAll('.accordion-header');
@@ -225,7 +224,6 @@
       responseBox.innerHTML = `<div style="color:red;">Error: ${err.message}</div>`;
       responseBox.classList.add("visible");
       pageWrapper.classList.add("has-response");
-      goButton.textContent = "New Search";
     } finally {
       spinner.classList.remove("visible");
       goButton.disabled = false;

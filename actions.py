@@ -72,6 +72,23 @@ class Actions:
 
 
     @staticmethod
+    def general_query(params):
+        """
+        Handles general knowledge or reasoning tasks that don't require
+        an API call or other structured action.
+        """
+        question = params.get("question")
+        if not question:
+            return {"error": "Missing 'question' parameter"}
+
+        # Call the local LLM directly
+        from model import run_local_model
+        logging.info(f"General query: {question}")
+        answer = run_local_model(question)
+        return {"answer": answer.strip()}
+
+
+    @staticmethod
     def echo(params):
         logging.info(f"Echo action called with params: {params}")
         # return {"echo": params}
